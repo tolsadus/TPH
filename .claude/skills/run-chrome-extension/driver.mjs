@@ -1,7 +1,7 @@
 // Driver for the "Tesla Price History" Chrome extension (MV3, content-script only).
 //
-// chromium-cli can't load unpacked extensions, so this uses Playwright (resolved
-// from ../backend/node_modules). It loads the REAL extension into a persistent
+// chromium-cli can't load unpacked extensions, so this uses Playwright (a local
+// devDependency — see package.json). It loads the REAL extension into a persistent
 // Chromium context and navigates to a REAL matched tesla.com URL — so the real
 // content.js injects exactly as in production — but intercepts the three network
 // calls the script makes and serves deterministic fixtures:
@@ -14,22 +14,19 @@
 // and only shows badges for VINs already in our DB. The layer PRs actually touch
 // is content.js + overlay.css — that is exactly what runs here.
 //
-// Usage (from chrome-extension/):
+// Usage (from the repo root, after `npm install && npx playwright install chromium`):
 //   node .claude/skills/run-chrome-extension/driver.mjs        # grid + popover screenshots
 //   node .claude/skills/run-chrome-extension/driver.mjs headed # show the window
 //
 // Screenshots land in /tmp/tph-ext-shots/. Exits non-zero if no badge is injected.
 
-import { createRequire } from "module";
+import { chromium } from "playwright";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
 import { mkdirSync } from "fs";
 
-const require = createRequire(new URL("../../../../backend/", import.meta.url));
-const { chromium } = require("playwright");
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const EXT_PATH = resolve(__dirname, "../../../"); // chrome-extension/ (has manifest.json)
+const EXT_PATH = resolve(__dirname, "../../../"); // repo root (has manifest.json)
 const SHOTS = "/tmp/tph-ext-shots";
 const headed = process.argv[2] === "headed";
 mkdirSync(SHOTS, { recursive: true });

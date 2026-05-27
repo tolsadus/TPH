@@ -6,7 +6,7 @@ Adds a small badge to each car on `tesla.com/*/inventory/used/{m3,my,ms,mx}` sho
 
 1. Open `chrome://extensions`
 2. Turn on **Developer mode** (top-right)
-3. Click **Load unpacked** and select this `chrome-extension/` folder
+3. Click **Load unpacked** and select this repo folder
 4. Visit https://www.tesla.com/fr_FR/inventory/used/my — badges appear on each card
 
 Click a badge for the full history popover.

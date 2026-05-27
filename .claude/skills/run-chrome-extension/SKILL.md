@@ -17,16 +17,16 @@ network calls and serves fixtures. Hitting live tesla.com directly is bot-gated,
 region-gated, and only shows badges for VINs already in our DB; the fixtures make
 the run deterministic and offline.
 
-**All paths below are relative to `chrome-extension/`.** Run everything from there.
+**All paths below are relative to the repo root.** Run everything from there.
 
 ## Prerequisites
 
-macOS or Linux. The extension has no build step and no `package.json` — it's
-loaded unpacked. The driver needs Playwright + Chromium, which live in the
-sibling `backend/` workspace (the driver resolves them from `../backend`):
+macOS or Linux. The extension itself has no build step — it's loaded unpacked.
+The driver needs Playwright + Chromium, declared as a devDependency in
+`package.json`:
 
 ```bash
-cd ../backend && npm install && npx playwright install chromium && cd ../chrome-extension
+npm install && npx playwright install chromium
 ```
 
 On **Linux**, headless Chromium needs xvfb plus the usual libs; wrap the driver
@@ -75,10 +75,10 @@ card `data-id` and the lookup response, or no badge is placed.
 
 ## Run (human path)
 
-Per `chrome-extension/README.md`: `chrome://extensions` → Developer mode → Load
-unpacked → select `chrome-extension/`, then visit a real
-`tesla.com/fr_FR/inventory/used/my`. Requires a residential IP and that our DB
-holds VINs currently listed there; otherwise no badges. Useless for headless agents.
+Per `README.md`: `chrome://extensions` → Developer mode → Load unpacked → select
+this repo folder, then visit a real `tesla.com/fr_FR/inventory/used/my`. Requires
+a residential IP and that our DB holds VINs currently listed there; otherwise no
+badges. Useless for headless agents.
 
 ## Gotchas
 
@@ -95,14 +95,14 @@ holds VINs currently listed there; otherwise no badges. Useless for headless age
   manifest `matches` globs don't cover and `content.js` never injects — the page
   loads but stays bare.
 - **`chromium-cli` can't load unpacked extensions** — that's why this is a
-  Playwright driver, not a `chromium-cli` heredoc like the frontend skill.
+  Playwright driver rather than a `chromium-cli` heredoc.
 - **VIN charset.** A VIN with `I`, `O`, or `Q` won't match `VIN_RE`, so the badge
   silently won't appear. Keep fixture VINs in `[A-HJ-NPR-Z0-9]`.
 
 ## Troubleshooting
 
-- **`Cannot find package 'playwright'`**: backend deps missing —
-  `cd ../backend && npm install && npx playwright install chromium`.
+- **`Cannot find package 'playwright'`**: deps not installed —
+  `npm install && npx playwright install chromium`.
 - **Timeout on `.tph-badge` + empty `[TPH]` logs**: content script didn't run —
   almost always the headless-mode trap above, or the URL no longer matches the
   manifest.
