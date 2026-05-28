@@ -15,8 +15,8 @@
   }
 
   function detectLocale() {
-    const m = location.pathname.match(/^\/([a-z]{2})_([A-Z]{2})\//);
-    if (m) return { language: m[1], market: m[2] };
+    const m = location.pathname.match(/^\/([a-z]{2})_([a-z]{2})\//i);
+    if (m) return { language: m[1].toLowerCase(), market: m[2].toUpperCase() };
     // No locale prefix: tesla.cn is the China site, unprefixed tesla.com is the US.
     return location.hostname.endsWith('.cn')
       ? { language: 'zh', market: 'CN' }
@@ -77,44 +77,48 @@
     return m ? m[0] : null;
   }
 
+  // Non-Eurozone Tesla markets. Eurozone markets (AT, BE, DE, ES, FI, FR, etc.)
+  // are intentionally absent and use the 'EUR' fallback below.
   const CURRENCY_BY_MARKET = {
-    CH: 'CHF', CN: 'CNY', CZ: 'CZK', DK: 'DKK', GB: 'GBP', HU: 'HUF',
-    IS: 'ISK', NO: 'NOK', PL: 'PLN', RO: 'RON', SE: 'SEK', TR: 'TRY',
-    US: 'USD',
+    AE: 'AED', AU: 'AUD', CA: 'CAD', CH: 'CHF', CN: 'CNY', CZ: 'CZK',
+    DK: 'DKK', GB: 'GBP', HK: 'HKD', HU: 'HUF', IL: 'ILS', IS: 'ISK',
+    JO: 'JOD', JP: 'JPY', KR: 'KRW', MO: 'MOP', MX: 'MXN', MY: 'MYR',
+    NO: 'NOK', NZ: 'NZD', PL: 'PLN', PR: 'USD', RO: 'RON', SE: 'SEK',
+    SG: 'SGD', TH: 'THB', TR: 'TRY', TW: 'TWD', US: 'USD',
   };
   // UI strings follow the user's browser language, falling back to English.
   const I18N = {
     en: { day: 'd', dateLocale: 'en-US', historyTitle: 'Price history',
       seenFor: d => `Seen for ${d}d`, records: n => `${n} record${n > 1 ? 's' : ''}`,
-      noChange: 'no change', total: s => `${s} total`, footer: 'Data via TeslaPricing',
+      noChange: 'no change', backToStart: 'back to start', total: s => `${s} total`, footer: 'Data via TeslaPricing',
       viewFull: 'View full price history' },
     fr: { day: 'j', dateLocale: 'fr-FR', historyTitle: 'Historique de prix',
       seenFor: d => `Vu depuis ${d}j`, records: n => `${n} relevé${n > 1 ? 's' : ''}`,
-      noChange: 'aucun changement', total: s => `${s} au total`, footer: 'Données via TeslaPricing',
+      noChange: 'aucun changement', backToStart: 'retour au prix initial', total: s => `${s} au total`, footer: 'Données via TeslaPricing',
       viewFull: 'Voir tableau historique prix' },
     de: { day: 'T', dateLocale: 'de-DE', historyTitle: 'Preisverlauf',
       seenFor: d => `Seit ${d} T`, records: n => `${n} Eintr${n > 1 ? 'äge' : 'ag'}`,
-      noChange: 'keine Änderung', total: s => `${s} gesamt`, footer: 'Daten via TeslaPricing',
+      noChange: 'keine Änderung', backToStart: 'zurück zum Ausgangspreis', total: s => `${s} gesamt`, footer: 'Daten via TeslaPricing',
       viewFull: 'Vollständigen Preisverlauf ansehen' },
     nl: { day: 'd', dateLocale: 'nl-NL', historyTitle: 'Prijsgeschiedenis',
       seenFor: d => `Sinds ${d}d`, records: n => `${n} meting${n > 1 ? 'en' : ''}`,
-      noChange: 'geen wijziging', total: s => `${s} totaal`, footer: 'Gegevens via TeslaPricing',
+      noChange: 'geen wijziging', backToStart: 'terug naar startprijs', total: s => `${s} totaal`, footer: 'Gegevens via TeslaPricing',
       viewFull: 'Volledige prijsgeschiedenis bekijken' },
     it: { day: 'g', dateLocale: 'it-IT', historyTitle: 'Storico prezzi',
       seenFor: d => `Visto da ${d}g`, records: n => `${n} rilevazion${n > 1 ? 'i' : 'e'}`,
-      noChange: 'nessuna variazione', total: s => `${s} in totale`, footer: 'Dati via TeslaPricing',
+      noChange: 'nessuna variazione', backToStart: 'tornato al prezzo iniziale', total: s => `${s} in totale`, footer: 'Dati via TeslaPricing',
       viewFull: 'Vedi lo storico completo dei prezzi' },
     es: { day: 'd', dateLocale: 'es-ES', historyTitle: 'Historial de precios',
       seenFor: d => `Visto hace ${d}d`, records: n => `${n} registro${n > 1 ? 's' : ''}`,
-      noChange: 'sin cambios', total: s => `${s} en total`, footer: 'Datos vía TeslaPricing',
+      noChange: 'sin cambios', backToStart: 'vuelta al precio inicial', total: s => `${s} en total`, footer: 'Datos vía TeslaPricing',
       viewFull: 'Ver historial completo de precios' },
     no: { day: 'd', dateLocale: 'nb-NO', historyTitle: 'Prishistorikk',
       seenFor: d => `Sett i ${d}d`, records: n => `${n} registrering${n > 1 ? 'er' : ''}`,
-      noChange: 'ingen endring', total: s => `${s} totalt`, footer: 'Data via TeslaPricing',
+      noChange: 'ingen endring', backToStart: 'tilbake til startpris', total: s => `${s} totalt`, footer: 'Data via TeslaPricing',
       viewFull: 'Se full prishistorikk' },
     sv: { day: 'd', dateLocale: 'sv-SE', historyTitle: 'Prishistorik',
       seenFor: d => `Sedd i ${d}d`, records: n => `${n} notering${n > 1 ? 'ar' : ''}`,
-      noChange: 'ingen ändring', total: s => `${s} totalt`, footer: 'Data via TeslaPricing',
+      noChange: 'ingen ändring', backToStart: 'tillbaka till startpris', total: s => `${s} totalt`, footer: 'Data via TeslaPricing',
       viewFull: 'Visa fullständig prishistorik' },
   };
   const L = I18N[(navigator.language || 'en').slice(0, 2).toLowerCase()] || I18N.en;
@@ -148,8 +152,12 @@
     } else if (delta > 0) {
       badge.classList.add('tph-up');
       badge.textContent = `▲ ${fmtSignedMoney(delta)} · ${days}${L.day}`;
+    } else if (history.length > 1) {
+      // Price moved but returned to its starting value — neutral marker.
+      badge.classList.add('tph-flat');
+      badge.textContent = `↕ ${fmtMoney(0)} · ${days}${L.day}`;
     } else {
-      // Seen only once / no price movement — neutral grey marker.
+      // Seen only once — neutral grey marker.
       badge.classList.add('tph-flat');
       badge.textContent = 'TPH';
     }
@@ -185,7 +193,10 @@
 
     const sub = document.createElement('p');
     sub.className = 'tph-sub';
-    sub.textContent = `${L.seenFor(days)} · ${L.records(history.length)} · ${totalDelta === 0 ? L.noChange : L.total(fmtSignedMoney(totalDelta))}`;
+    const changeText = totalDelta !== 0
+      ? L.total(fmtSignedMoney(totalDelta))
+      : (history.length > 1 ? L.backToStart : L.noChange);
+    sub.textContent = `${L.seenFor(days)} · ${L.records(history.length)} · ${changeText}`;
     el.appendChild(sub);
 
     let prev = null;

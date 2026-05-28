@@ -34,11 +34,15 @@ mkdirSync(SHOTS, { recursive: true });
 // --- fixtures ---------------------------------------------------------------
 // VINs must match /[A-HJ-NPR-Z0-9]{17}/ (no I/O/Q) and appear in BOTH the card
 // data-id and the lookup-vins response, or content.js won't place a badge.
+// Each car lists its full price-history (oldest -> newest). The backend only
+// records a row on a real price change, so distinct entries == real movement.
 const CARS = [
-  { vin: "LRW3E7FS9PC100001", model: "Model Y Grande Autonomie", from: 52990, now: 46990 }, // drop -> red ▼
-  { vin: "LRW3E7FS2PC100002", model: "Model Y Propulsion",        from: 41990, now: 41990 }, // flat -> grey TPH
-  { vin: "LRW3E7EB7PC100003", model: "Model Y Performance",       from: 55990, now: 57990 }, // up   -> green ▲
+  { vin: "LRW3E7FS4PC100004", model: "Model Y Grande Autonomie", prices: [30800, 30700, 31400, 30900, 30800, 31100, 30800] }, // fluctuated, net 0 -> grey ↕ €0 / "back to start"
+  { vin: "LRW3E7FS9PC100001", model: "Model Y Grande Autonomie", prices: [52990, 49990, 46990] },                             // drop -> red ▼
+  { vin: "LRW3E7EB7PC100003", model: "Model Y Performance",       prices: [55990, 56990, 57990] },                             // up   -> green ▲
+  { vin: "LRW3E7FS2PC100002", model: "Model Y Propulsion",        prices: [41990] },                                          // single record -> grey TPH
 ];
+const now = (c) => c.prices[c.prices.length - 1];
 const daysAgo = (d) => new Date(Date.now() - d * 86400000).toISOString();
 
 const pageHtml = `<!doctype html><html lang="fr"><head><meta charset="utf-8">
@@ -56,7 +60,7 @@ ${CARS.map(c => `
     <div class="banner"></div>
     <section class="card-info-details">
       <div class="title">Tesla ${c.model}</div>
-      <div class="result-pricing">${c.now.toLocaleString("fr-FR")} €</div>
+      <div class="result-pricing">${now(c).toLocaleString("fr-FR")} €</div>
     </section>
   </article>`).join("")}
 </section></body></html>`;
@@ -66,16 +70,16 @@ const inventoryJson = JSON.stringify({
   total_matches_found: CARS.length,
 });
 
-const lookupJson = JSON.stringify(Object.fromEntries(CARS.map((c, i) => [c.vin, {
-  id: 1000 + i,
-  current_price: c.now,
-  first_seen_at: daysAgo(34),
-  history: [
-    { at: daysAgo(34), price: c.from },
-    { at: daysAgo(12), price: Math.round((c.from + c.now) / 2) },
-    { at: daysAgo(2),  price: c.now },
-  ],
-}])));
+const lookupJson = JSON.stringify(Object.fromEntries(CARS.map((c, i) => {
+  const n = c.prices.length;
+  const history = c.prices.map((price, j) => ({ at: daysAgo((n - 1 - j) * 2), price }));
+  return [c.vin, {
+    id: 1000 + i,
+    current_price: now(c),
+    first_seen_at: history[0].at,
+    history,
+  }];
+})));
 
 // --- launch -----------------------------------------------------------------
 // headless:false keeps Playwright from injecting the OLD headless flag (under
@@ -113,14 +117,18 @@ try {
   await page.waitForSelector(".tph-badge", { timeout: 15000 });
   const n = await page.locator(".tph-badge").count();
   console.log(`✓ ${n} badge(s) injected`);
+  const badgeTexts = await page.locator(".tph-badge").allInnerTexts();
+  console.log("  badges:", JSON.stringify(badgeTexts));
   await page.screenshot({ path: `${SHOTS}/01-grid.png`, fullPage: true });
   console.log("📸", `${SHOTS}/01-grid.png`);
 
-  // Hover the first badge to render the price-history popover.
+  // Hover the first badge (the back-to-start car) to render the popover.
   await page.locator(".tph-badge").first().hover();
   await page.waitForSelector(".tph-popover", { timeout: 5000 });
   const rows = await page.locator(".tph-popover .tph-row").count();
+  const subtitle = await page.locator(".tph-popover .tph-sub").innerText();
   console.log(`✓ popover open with ${rows} history row(s)`);
+  console.log("  subtitle:", JSON.stringify(subtitle));
   await page.screenshot({ path: `${SHOTS}/02-popover.png` });
   console.log("📸", `${SHOTS}/02-popover.png`);
 
