@@ -10,7 +10,7 @@
   const HISTORY_BY_VIN = new Map();          // VIN -> { current_price, history, ... }
 
   function detectModel() {
-    const m = location.pathname.match(/\/inventory\/used\/(m[3sxy])/i);
+    const m = location.pathname.match(/\/inventory\/used\/(m[3sxy]|ct)/i);
     return m ? m[1].toLowerCase() : null;
   }
 

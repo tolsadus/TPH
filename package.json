@@ -1,6 +1,6 @@
 {
   "name": "tph",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": true,
   "description": "Tesla Price History — Chrome extension that shows used-listing reprice history on tesla.com.",
   "scripts": {
