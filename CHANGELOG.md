@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.0.4] - 2026-06-03
+### Added
+- Support for the Cybertruck. Price-history badges now appear on used
+  Cybertruck listings (`/inventory/used/ct`), the same as Model 3/Y/S/X.
+
 ## [0.0.3] - 2026-05-28
 ### Fixed
 - Show the correct currency for every Tesla market. Non-Euro markets
